@@ -1,8 +1,5 @@
-import asyncio
-
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
-
 from ws_manager import manager
 
 app = FastAPI()
