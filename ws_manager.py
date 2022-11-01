@@ -9,7 +9,6 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
-
         from ros_listener import ros_listen
         asyncio.create_task(ros_listen(self))
 

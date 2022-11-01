@@ -1,38 +1,38 @@
 import asyncio
-import datetime
-from typing import List
+
+import rclpy
+from rclpy.node import Node
+
+from tutorial_interfaces.msg import Num
 
 from ws_manager import ConnectionManager
 
 
+class MinimalSubscriber(Node):
 
-class RosSubscriber:
+    def __init__(self, manager: ConnectionManager):
+        super().__init__('minimal_subscriber')
+        self.subscription = self.create_subscription(
+            Num,
+            'topic',
+            self.listener_callback,
+            10)
+        self.ws_manager = manager
+        # self.subscription  # prevent unused variable warning
 
-    def __init__(self):
-        self.callback_list: List = []
-        asyncio.create_task(self._periodic_broadcast())
-
-    async def _periodic_broadcast(self, wait_sec: int = 1):
-        while True:
-            await asyncio.sleep(wait_sec)
-            self.send_to_callbacks(str(datetime.datetime.now()))
-
-    def send_to_callbacks(self, msg):
-        for callback in self.callback_list:
-            callback(msg)
-
-    def subscribe(self, callback):
-        self.callback_list.append(callback)
-
-
-ros = RosSubscriber()
+    def listener_callback(self, msg):
+        asyncio.create_task(self.ws_manager.broadcast(f"Message from ros: {msg}"))
 
 
 async def ros_listen(manager: ConnectionManager):
-    def ros_callback(msg):
-        asyncio.create_task(manager.broadcast(f"Message from ros: {msg}"))
+    rclpy.init()
 
-    ros.subscribe(ros_callback)
-    # Вместо строки выше нужно подписать ros на эту функцию
-    # ros_callback как раз то что будет отсылать в manager вебсокета
-    # а тут нужно сделать действия которые этот коллбэк подпишут
+    minimal_subscriber = MinimalSubscriber(manager)
+
+    rclpy.spin(minimal_subscriber)
+
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
+    minimal_subscriber.destroy_node()
+    rclpy.shutdown()
